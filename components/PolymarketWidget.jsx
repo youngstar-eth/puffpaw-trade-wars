@@ -95,7 +95,7 @@ function PolymarketWidget() {
           Total Volume: <strong style={{color: colors.primary}}>${totalVolume.toLocaleString('en-US', { maximumFractionDigits: 0 })}</strong>
         </div>
         <div style={styles.statItem}>
-          Total Traders: <strong style={{color: colors.info}}>{totalTraders.toLocaleString()}</strong>
+          Total Holders: <strong style={{color: colors.info}}>{totalTraders.toLocaleString()}</strong>
         </div>
       </div>
 
