@@ -99,7 +99,7 @@ export async function GET() {
     return NextResponse.json({
       markets: enriched,
       totalVolume,
-      totalTraders: allUniqueTraders.size,
+      totalTraders: enriched.reduce((s, m) => s + (m.yesTraders || 0) + (m.noTraders || 0), 0), // Total positions
       _meta: {
         fetchedAt: new Date().toISOString(),
       }
