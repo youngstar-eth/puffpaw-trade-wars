@@ -10,3 +10,14 @@
     }
   ]
 }
+
+  "outputDirectory": ".next",
+  "framework": "nextjs",
+  "regions": ["iad1"],
+  "crons": [
+    {
+      "path": "/api/cron/refresh",
+      "schedule": "0 0 * * *"
+    }
+  ]
+}
