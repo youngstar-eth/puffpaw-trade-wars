@@ -1,0 +1,40 @@
+name: Update Leaderboard Data
+
+on:
+  schedule:
+    # Her 10 dakikada bir çalışır
+    - cron: '*/10 * * * *'
+  workflow_dispatch: # Manuel tetikleme için
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          
+      - name: Install dependencies
+        run: |
+          pip install web3 dune-client
+          
+      - name: Run update script
+        env:
+          DUNE_API_KEY: ${{ secrets.DUNE_API_KEY }}
+          RPC_URL: ${{ secrets.RPC_URL }}
+        run: |
+          python scripts/update_leaderboard.py
+          
+      - name: Commit and push if changed
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add public/leaderboard_data.json
+          git diff --staged --quiet || git commit -m "🔄 Auto-update leaderboard data [skip ci]"
+          git push
+
