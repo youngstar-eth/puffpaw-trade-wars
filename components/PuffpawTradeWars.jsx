@@ -3,11 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import PolymarketWidget from './PolymarketWidget';
 
-// Known bot/agent wallet addresses (add addresses here as they are identified)
-const KNOWN_BOTS = [
-  // Example: '0x1234...abcd'
-  // Add verified bot addresses here
-];
+// Signer data map: address -> { signer, isClaw }
+// If signer === address, it's a Claw (bot/agent) because humans use proxy wallets via Polymarket UI
 
 const PuffpawTradeWars = () => {
   const [data, setData] = useState([]);
@@ -17,6 +14,9 @@ const PuffpawTradeWars = () => {
   const [limit] = useState(1000);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [nextUpdate, setNextUpdate] = useState(null);
+  
+  // Signer data for faction detection
+  const [signerData, setSignerData] = useState({});
   
   // Polymarket stats for hero section
   const [polymarketStats, setPolymarketStats] = useState({
@@ -30,14 +30,14 @@ const PuffpawTradeWars = () => {
     totalHolders: 0,
   });
 
-  // Faction stats (mock data for now)
-  const [factionStats] = useState({
-    pawsCount: 1250,
-    clawsCount: 81,
-    pawsVolume: 607000,
-    clawsVolume: 328000,
-    pawsPercent: 65,
-    clawsPercent: 35,
+  // Faction stats (calculated from signer data)
+  const [factionStats, setFactionStats] = useState({
+    pawsCount: 0,
+    clawsCount: 0,
+    pawsVolume: 0,
+    clawsVolume: 0,
+    pawsPercent: 50,
+    clawsPercent: 50,
   });
   
   // Auto-refresh interval: 10 minutes (600000 ms)
@@ -65,15 +65,20 @@ const PuffpawTradeWars = () => {
     clawCyan: '#06b6d4',
   };
 
-  // Check if an address is a known bot
-  const isBot = (address) => {
+  // Check if an address is a Claw (bot/agent)
+  // A Claw is identified when signer === address (no proxy wallet = direct trading = bot)
+  const isClaw = (address) => {
     if (!address) return false;
-    return KNOWN_BOTS.some(bot => bot.toLowerCase() === address.toLowerCase());
+    const lowerAddress = address.toLowerCase();
+    const data = signerData[lowerAddress];
+    if (!data) return false;
+    // If signer equals address, it's a Claw (bot/agent)
+    return data.signer.toLowerCase() === lowerAddress;
   };
 
   // Get faction for a trader
   const getFaction = (address) => {
-    return isBot(address) ? 'claw' : 'paw';
+    return isClaw(address) ? 'claw' : 'paw';
   };
 
   const styles = {
@@ -572,16 +577,53 @@ const PuffpawTradeWars = () => {
       const cols = json.result.metadata?.column_names || 
                    (rows.length > 0 ? Object.keys(rows[0]) : []);
 
-      // Fetch signer data to replace trader addresses
+      // Fetch signer data to replace trader addresses and detect Claws
       let signerMap = {};
+      let newSignerData = {};
+      let pawsCount = 0, clawsCount = 0, pawsVolume = 0, clawsVolume = 0;
+      
       try {
         const signerRes = await fetch('/leaderboard_data.json');
         if (signerRes.ok) {
-          const signerData = await signerRes.json();
-          signerData.forEach(item => {
+          const signerDataArray = await signerRes.json();
+          signerDataArray.forEach(item => {
             if (item.address && item.signer) {
-              signerMap[item.address.toLowerCase()] = item.signer;
+              const lowerAddress = item.address.toLowerCase();
+              signerMap[lowerAddress] = item.signer;
+              newSignerData[lowerAddress] = {
+                signer: item.signer,
+                volume: item.volume || 0,
+              };
+              
+              // Calculate faction stats
+              // If signer === address, it's a Claw (bot/agent)
+              const isClaw = item.signer.toLowerCase() === lowerAddress;
+              if (isClaw) {
+                clawsCount++;
+                clawsVolume += item.volume || 0;
+              } else {
+                pawsCount++;
+                pawsVolume += item.volume || 0;
+              }
             }
+          });
+          
+          // Update signer data state
+          setSignerData(newSignerData);
+          
+          // Calculate percentages
+          const totalVolume = pawsVolume + clawsVolume;
+          const pawsPercent = totalVolume > 0 ? Math.round((pawsVolume / totalVolume) * 100) : 50;
+          const clawsPercent = 100 - pawsPercent;
+          
+          // Update faction stats
+          setFactionStats({
+            pawsCount,
+            clawsCount,
+            pawsVolume,
+            clawsVolume,
+            pawsPercent,
+            clawsPercent,
           });
         }
       } catch (e) {
@@ -600,6 +642,9 @@ const PuffpawTradeWars = () => {
       const enrichedRows = rows.map(row => {
         const enrichedRow = { ...row };
         const rewardAmount = row.reward_amount || 0;
+        
+        // Store original proxy address for faction detection
+        enrichedRow._originalTrader = row.trader;
         
         // Replace trader address with signer address if available
         if (row.trader && signerMap[row.trader.toLowerCase()]) {
@@ -688,9 +733,9 @@ const PuffpawTradeWars = () => {
     return () => clearInterval(intervalId);
   }, [fetchData, fetchPolymarketStats]);
 
-  const getRowStyle = (index, traderAddress) => {
+  const getRowStyle = (index, originalTraderAddress) => {
     const baseStyle = { ...styles.tr };
-    const faction = getFaction(traderAddress);
+    const faction = getFaction(originalTraderAddress);
     
     // Top 3 ranks have priority styling
     if (index === 0) return { ...baseStyle, ...styles.rank1 };
@@ -735,9 +780,9 @@ const PuffpawTradeWars = () => {
   };
 
   const renderCellValue = (row, col) => {
-    // Handle faction column specially
+    // Handle faction column specially - use original trader address for detection
     if (col === 'faction') {
-      return renderFactionBadge(row.trader);
+      return renderFactionBadge(row._originalTrader || row.trader);
     }
 
     const formatted = formatValue(row[col], col);
@@ -941,32 +986,35 @@ const PuffpawTradeWars = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {data.map((row, rowIdx) => (
-                    <tr 
-                      key={rowIdx} 
-                      style={getRowStyle(rowIdx, row.trader)}
-                      onMouseEnter={(e) => {
-                        if (rowIdx > 2) {
-                          e.currentTarget.style.background = colors.surfaceLight;
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (rowIdx > 2) {
-                          const faction = getFaction(row.trader);
-                          e.currentTarget.style.background = faction === 'claw' 
-                            ? 'rgba(168, 85, 247, 0.03)' 
-                            : 'rgba(34, 197, 94, 0.03)';
-                        }
-                      }}
-                    >
-                      {columns.map((col, colIdx) => (
-                        <td key={colIdx} style={styles.td}>
-                          {col === 'rank_num' && getRankBadge(rowIdx)}
-                          {renderCellValue(row, col)}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
+                  {data.map((row, rowIdx) => {
+                    const originalAddress = row._originalTrader || row.trader;
+                    return (
+                      <tr 
+                        key={rowIdx} 
+                        style={getRowStyle(rowIdx, originalAddress)}
+                        onMouseEnter={(e) => {
+                          if (rowIdx > 2) {
+                            e.currentTarget.style.background = colors.surfaceLight;
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (rowIdx > 2) {
+                            const faction = getFaction(originalAddress);
+                            e.currentTarget.style.background = faction === 'claw' 
+                              ? 'rgba(168, 85, 247, 0.03)' 
+                              : 'rgba(34, 197, 94, 0.03)';
+                          }
+                        }}
+                      >
+                        {columns.map((col, colIdx) => (
+                          <td key={colIdx} style={styles.td}>
+                            {col === 'rank_num' && getRankBadge(rowIdx)}
+                            {renderCellValue(row, col)}
+                          </td>
+                        ))}
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
