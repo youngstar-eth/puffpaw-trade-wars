@@ -18,6 +18,12 @@ const PuffpawTradeWars = () => {
     totalTraders: 0,
   });
   
+  // Dune stats (from query)
+  const [duneStats, setDuneStats] = useState({
+    totalTraders: 0,
+    totalHolders: 0,
+  });
+  
   // Auto-refresh interval: 10 minutes (600000 ms)
   const REFRESH_INTERVAL = 600000;
 
@@ -437,8 +443,18 @@ const PuffpawTradeWars = () => {
         });
       }
 
-      setColumns(newCols);
+      // Filter out meta columns from display
+      const displayCols = newCols.filter(col => !col.startsWith('_'));
+      setColumns(displayCols);
       setData(enrichedRows);
+      
+      // Extract Dune stats from first row (meta columns)
+      if (rows.length > 0) {
+        setDuneStats({
+          totalTraders: rows[0]._total_traders || 0,
+          totalHolders: rows[0]._total_holders || 0,
+        });
+      }
       
       // Update timestamps
       const now = new Date();
@@ -553,9 +569,15 @@ const PuffpawTradeWars = () => {
           <div style={styles.statsBar}>
             <div style={styles.statItem}>
               <div style={styles.statValue}>
-                {polymarketStats.totalTraders.toLocaleString()}
+                {duneStats.totalTraders.toLocaleString()}
               </div>
               <div style={styles.statLabel}>Total Traders</div>
+            </div>
+            <div style={styles.statItem}>
+              <div style={styles.statValue}>
+                {duneStats.totalHolders.toLocaleString()}
+              </div>
+              <div style={styles.statLabel}>Current Holders</div>
             </div>
             <div style={styles.statItem}>
               <div style={styles.statValue}>
