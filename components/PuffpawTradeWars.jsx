@@ -36,6 +36,10 @@ const PuffpawTradeWars = () => {
     clawsCount: 0,
     pawsVolume: 0,
     clawsVolume: 0,
+    pawsPnl: 0,
+    clawsPnl: 0,
+    pawsAvgScore: 0,
+    clawsAvgScore: 0,
     pawsPercent: 50,
     clawsPercent: 50,
   });
@@ -166,55 +170,115 @@ const PuffpawTradeWars = () => {
     // Faction Battle Bar styles
     battleBarContainer: {
       marginBottom: '32px',
-      padding: '24px',
-      background: colors.surface,
+      padding: '28px',
+      background: `linear-gradient(135deg, ${colors.surface} 0%, rgba(34, 197, 94, 0.05) 30%, rgba(168, 85, 247, 0.05) 70%, ${colors.surface} 100%)`,
       borderRadius: '16px',
       border: `1px solid ${colors.surfaceLight}`,
+      position: 'relative',
+      overflow: 'hidden',
     },
     battleBarHeader: {
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
-      marginBottom: '20px',
+      marginBottom: '24px',
     },
     factionSide: {
       display: 'flex',
       flexDirection: 'column',
-      gap: '4px',
+      gap: '6px',
     },
     factionName: {
-      fontSize: '1.25rem',
-      fontWeight: 700,
+      fontSize: '1.5rem',
+      fontWeight: 800,
       display: 'flex',
       alignItems: 'center',
-      gap: '8px',
+      gap: '10px',
+    },
+    factionEmoji: {
+      fontSize: '2rem',
     },
     factionStats: {
-      fontSize: '0.85rem',
+      fontSize: '0.9rem',
       color: colors.textMuted,
+      fontWeight: 500,
     },
     vsText: {
-      fontSize: '1.5rem',
+      fontSize: '2rem',
       fontWeight: 900,
       color: colors.primary,
-      textShadow: `0 0 20px rgba(232, 65, 66, 0.5)`,
+      textShadow: `0 0 30px rgba(232, 65, 66, 0.6), 0 0 60px rgba(232, 65, 66, 0.3)`,
+      animation: 'vsPulse 2s ease-in-out infinite',
     },
     battleBarTrack: {
-      height: '12px',
+      height: '20px',
       background: colors.backgroundDark,
-      borderRadius: '6px',
+      borderRadius: '10px',
       overflow: 'hidden',
       display: 'flex',
+      boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.3)',
     },
     pawsBar: {
       height: '100%',
       background: `linear-gradient(90deg, ${colors.pawGreen}, ${colors.pawAmber})`,
-      transition: 'width 0.5s ease',
+      transition: 'width 1s ease-in-out',
+      position: 'relative',
+      overflow: 'hidden',
     },
     clawsBar: {
       height: '100%',
       background: `linear-gradient(90deg, ${colors.clawPurple}, ${colors.clawCyan})`,
-      transition: 'width 0.5s ease',
+      transition: 'width 1s ease-in-out',
+      position: 'relative',
+      overflow: 'hidden',
+    },
+    // VS Screen styles
+    vsScreenContainer: {
+      marginBottom: '32px',
+      display: 'grid',
+      gridTemplateColumns: '1fr auto 1fr',
+      gap: '0',
+      alignItems: 'stretch',
+    },
+    vsTeamCard: {
+      padding: '28px',
+      borderRadius: '16px',
+      background: colors.surface,
+      border: `1px solid ${colors.surfaceLight}`,
+    },
+    vsTeamStat: {
+      marginBottom: '16px',
+    },
+    vsTeamStatLabel: {
+      fontSize: '0.8rem',
+      color: colors.textMuted,
+      textTransform: 'uppercase',
+      letterSpacing: '0.5px',
+      marginBottom: '4px',
+    },
+    vsTeamStatValue: {
+      fontSize: '1.4rem',
+      fontWeight: 700,
+    },
+    vsDivider: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '0 20px',
+    },
+    vsBadgeLarge: {
+      width: '64px',
+      height: '64px',
+      borderRadius: '50%',
+      background: `radial-gradient(circle, ${colors.primary} 0%, rgba(232, 65, 66, 0.3) 100%)`,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontSize: '1.5rem',
+      fontWeight: 900,
+      color: '#fff',
+      animation: 'vsPulse 2s ease-in-out infinite',
+      boxShadow: `0 0 30px rgba(232, 65, 66, 0.4)`,
     },
     // Prize Categories styles
     prizeContainer: {
@@ -324,22 +388,25 @@ const PuffpawTradeWars = () => {
       transition: 'background 0.15s ease',
     },
     rank1: {
-      background: 'rgba(251, 191, 36, 0.1)',
-      borderLeft: `3px solid ${colors.gold}`,
+      background: 'rgba(251, 191, 36, 0.12)',
+      borderLeft: `4px solid ${colors.gold}`,
+      animation: 'topGlow 3s ease-in-out infinite',
     },
     rank2: {
-      background: 'rgba(209, 213, 219, 0.08)',
-      borderLeft: `3px solid ${colors.silver}`,
+      background: 'rgba(209, 213, 219, 0.1)',
+      borderLeft: `4px solid ${colors.silver}`,
     },
     rank3: {
-      background: 'rgba(217, 119, 6, 0.1)',
-      borderLeft: `3px solid ${colors.bronze}`,
+      background: 'rgba(217, 119, 6, 0.12)',
+      borderLeft: `4px solid ${colors.bronze}`,
     },
     pawRow: {
-      background: 'rgba(34, 197, 94, 0.03)',
+      background: 'rgba(34, 197, 94, 0.06)',
+      borderLeft: `3px solid rgba(34, 197, 94, 0.3)`,
     },
     clawRow: {
-      background: 'rgba(168, 85, 247, 0.03)',
+      background: 'rgba(168, 85, 247, 0.06)',
+      borderLeft: `3px solid rgba(168, 85, 247, 0.3)`,
     },
     loading: {
       textAlign: 'center',
@@ -396,19 +463,22 @@ const PuffpawTradeWars = () => {
     factionBadge: {
       display: 'inline-flex',
       alignItems: 'center',
-      gap: '4px',
-      padding: '4px 8px',
-      borderRadius: '4px',
-      fontSize: '0.75rem',
-      fontWeight: 600,
+      gap: '6px',
+      padding: '5px 12px',
+      borderRadius: '6px',
+      fontSize: '0.8rem',
+      fontWeight: 700,
+      letterSpacing: '0.3px',
     },
     pawBadge: {
-      background: 'rgba(34, 197, 94, 0.15)',
+      background: 'rgba(34, 197, 94, 0.18)',
       color: colors.pawGreen,
+      border: '1px solid rgba(34, 197, 94, 0.25)',
     },
     clawBadge: {
-      background: 'rgba(168, 85, 247, 0.15)',
+      background: 'rgba(168, 85, 247, 0.18)',
       color: colors.clawPurple,
+      border: '1px solid rgba(168, 85, 247, 0.25)',
     },
     positiveValue: {
       color: colors.success,
@@ -586,6 +656,7 @@ const PuffpawTradeWars = () => {
       let signerMap = {};
       let newSignerData = {};
       let pawsCount = 0, clawsCount = 0, pawsVolume = 0, clawsVolume = 0;
+      let pawsPnl = 0, clawsPnl = 0, pawsScoreSum = 0, clawsScoreSum = 0;
       let hasResolvedSigners = false;
       
       try {
@@ -626,9 +697,13 @@ const PuffpawTradeWars = () => {
               if (signerResolved) {
                 clawsCount++;
                 clawsVolume += item.volume || 0;
+                clawsPnl += item.pnl || 0;
+                clawsScoreSum += item.score || 0;
               } else {
                 pawsCount++;
                 pawsVolume += item.volume || 0;
+                pawsPnl += item.pnl || 0;
+                pawsScoreSum += item.score || 0;
               }
             }
           });
@@ -647,6 +722,10 @@ const PuffpawTradeWars = () => {
             clawsCount,
             pawsVolume,
             clawsVolume,
+            pawsPnl,
+            clawsPnl,
+            pawsAvgScore: pawsCount > 0 ? pawsScoreSum / pawsCount : 0,
+            clawsAvgScore: clawsCount > 0 ? clawsScoreSum / clawsCount : 0,
             pawsPercent,
             clawsPercent,
           });
@@ -826,35 +905,109 @@ const PuffpawTradeWars = () => {
     return formatted;
   };
 
-  // Faction Battle Bar Component
+  // Yardımcı: büyük sayı formatlama
+  const formatLargeNumber = (num) => {
+    if (Math.abs(num) >= 1000000) return '$' + (num / 1000000).toFixed(2) + 'M';
+    if (Math.abs(num) >= 1000) return '$' + (num / 1000).toFixed(0) + 'K';
+    return '$' + num.toFixed(0);
+  };
+
+  // Faction Battle Bar Component — Gelişmiş animasyonlu versiyon
   const FactionBattleBar = () => (
     <div style={styles.battleBarContainer}>
+      {/* Shimmer overlay */}
+      <div style={{position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.02) 50%, transparent 100%)', animation: 'shimmer 3s ease-in-out infinite', pointerEvents: 'none'}} />
       <div style={styles.battleBarHeader}>
         <div style={{...styles.factionSide, alignItems: 'flex-start'}}>
           <div style={{...styles.factionName, color: colors.pawGreen}}>
-            🐾 Paws
+            <span style={styles.factionEmoji}>🐾</span> Paws
           </div>
           <div style={styles.factionStats}>
-            {factionStats.pawsCount.toLocaleString()} traders • ${(factionStats.pawsVolume / 1000).toFixed(0)}K volume
+            {factionStats.pawsCount.toLocaleString()} traders • {formatLargeNumber(factionStats.pawsVolume)} vol
           </div>
         </div>
         <div style={styles.vsText}>VS</div>
         <div style={{...styles.factionSide, alignItems: 'flex-end'}}>
           <div style={{...styles.factionName, color: colors.clawPurple}}>
-            Claws ⚙️
+            Claws <span style={styles.factionEmoji}>⚙️</span>
           </div>
           <div style={styles.factionStats}>
-            {factionStats.clawsCount.toLocaleString()} agents • ${(factionStats.clawsVolume / 1000).toFixed(0)}K volume
+            {factionStats.clawsCount.toLocaleString()} agents • {formatLargeNumber(factionStats.clawsVolume)} vol
           </div>
         </div>
       </div>
       <div style={styles.battleBarTrack}>
-        <div style={{...styles.pawsBar, width: `${factionStats.pawsPercent}%`}} />
-        <div style={{...styles.clawsBar, width: `${factionStats.clawsPercent}%`}} />
+        <div style={{...styles.pawsBar, width: `${factionStats.pawsPercent}%`}}>
+          <div style={{position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 50%, transparent 100%)', animation: 'barShimmer 2s ease-in-out infinite'}} />
+        </div>
+        <div style={{...styles.clawsBar, width: `${factionStats.clawsPercent}%`}}>
+          <div style={{position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 50%, transparent 100%)', animation: 'barShimmer 2s ease-in-out infinite reverse'}} />
+        </div>
       </div>
-      <div style={{display: 'flex', justifyContent: 'space-between', marginTop: '8px', fontSize: '0.85rem', fontWeight: 600}}>
-        <span style={{color: colors.pawGreen}}>{factionStats.pawsPercent}%</span>
-        <span style={{color: colors.clawPurple}}>{factionStats.clawsPercent}%</span>
+      <div style={{display: 'flex', justifyContent: 'space-between', marginTop: '10px', fontSize: '1rem', fontWeight: 700}}>
+        <span style={{color: colors.pawGreen, textShadow: `0 0 10px rgba(34, 197, 94, 0.4)`}}>{factionStats.pawsPercent}%</span>
+        <span style={{fontSize: '0.8rem', color: colors.textMuted, alignSelf: 'center'}}>Volume Dominance</span>
+        <span style={{color: colors.clawPurple, textShadow: `0 0 10px rgba(168, 85, 247, 0.4)`}}>{factionStats.clawsPercent}%</span>
+      </div>
+    </div>
+  );
+
+  // VS Ekranı — İki takımın istatistikleri karşı karşıya
+  const VSScreen = () => (
+    <div style={styles.vsScreenContainer}>
+      {/* Paws Tarafı */}
+      <div style={{...styles.vsTeamCard, borderTop: `3px solid ${colors.pawGreen}`, boxShadow: `0 0 20px rgba(34, 197, 94, 0.08)`}}>
+        <div style={{textAlign: 'center', marginBottom: '20px'}}>
+          <div style={{fontSize: '2.5rem', marginBottom: '8px'}}>🐾</div>
+          <div style={{fontSize: '1.3rem', fontWeight: 800, color: colors.pawGreen}}>Team Paws</div>
+          <div style={{fontSize: '0.8rem', color: colors.textMuted}}>Human Traders</div>
+        </div>
+        <div style={styles.vsTeamStat}>
+          <div style={styles.vsTeamStatLabel}>Total Volume</div>
+          <div style={{...styles.vsTeamStatValue, color: colors.pawGreen}}>{formatLargeNumber(factionStats.pawsVolume)}</div>
+        </div>
+        <div style={styles.vsTeamStat}>
+          <div style={styles.vsTeamStatLabel}>Total PnL</div>
+          <div style={{...styles.vsTeamStatValue, color: factionStats.pawsPnl >= 0 ? colors.success : colors.error}}>{formatLargeNumber(factionStats.pawsPnl)}</div>
+        </div>
+        <div style={styles.vsTeamStat}>
+          <div style={styles.vsTeamStatLabel}>Traders</div>
+          <div style={{...styles.vsTeamStatValue, color: colors.text}}>{factionStats.pawsCount.toLocaleString()}</div>
+        </div>
+        <div style={{...styles.vsTeamStat, marginBottom: 0}}>
+          <div style={styles.vsTeamStatLabel}>Avg Score</div>
+          <div style={{...styles.vsTeamStatValue, color: colors.text}}>{factionStats.pawsAvgScore.toFixed(2)}</div>
+        </div>
+      </div>
+
+      {/* VS Divider */}
+      <div style={styles.vsDivider}>
+        <div style={styles.vsBadgeLarge}>VS</div>
+      </div>
+
+      {/* Claws Tarafı */}
+      <div style={{...styles.vsTeamCard, borderTop: `3px solid ${colors.clawPurple}`, boxShadow: `0 0 20px rgba(168, 85, 247, 0.08)`}}>
+        <div style={{textAlign: 'center', marginBottom: '20px'}}>
+          <div style={{fontSize: '2.5rem', marginBottom: '8px'}}>⚙️</div>
+          <div style={{fontSize: '1.3rem', fontWeight: 800, color: colors.clawPurple}}>Team Claws</div>
+          <div style={{fontSize: '0.8rem', color: colors.textMuted}}>Bots & Agents</div>
+        </div>
+        <div style={styles.vsTeamStat}>
+          <div style={styles.vsTeamStatLabel}>Total Volume</div>
+          <div style={{...styles.vsTeamStatValue, color: colors.clawPurple}}>{formatLargeNumber(factionStats.clawsVolume)}</div>
+        </div>
+        <div style={styles.vsTeamStat}>
+          <div style={styles.vsTeamStatLabel}>Total PnL</div>
+          <div style={{...styles.vsTeamStatValue, color: factionStats.clawsPnl >= 0 ? colors.success : colors.error}}>{formatLargeNumber(factionStats.clawsPnl)}</div>
+        </div>
+        <div style={styles.vsTeamStat}>
+          <div style={styles.vsTeamStatLabel}>Agents</div>
+          <div style={{...styles.vsTeamStatValue, color: colors.text}}>{factionStats.clawsCount.toLocaleString()}</div>
+        </div>
+        <div style={{...styles.vsTeamStat, marginBottom: 0}}>
+          <div style={styles.vsTeamStatLabel}>Avg Score</div>
+          <div style={{...styles.vsTeamStatValue, color: colors.text}}>{factionStats.clawsAvgScore.toFixed(2)}</div>
+        </div>
       </div>
     </div>
   );
@@ -956,6 +1109,9 @@ const PuffpawTradeWars = () => {
         {/* Faction Battle Bar */}
         <FactionBattleBar />
 
+        {/* VS Screen */}
+        <VSScreen />
+
         {/* Prize Categories */}
         <PrizeCategories />
 
@@ -1027,9 +1183,9 @@ const PuffpawTradeWars = () => {
                         onMouseLeave={(e) => {
                           if (rowIdx > 2) {
                             const faction = getFaction(originalAddress);
-                            e.currentTarget.style.background = faction === 'claw' 
-                              ? 'rgba(168, 85, 247, 0.03)' 
-                              : 'rgba(34, 197, 94, 0.03)';
+                            e.currentTarget.style.background = faction === 'claw'
+                              ? 'rgba(168, 85, 247, 0.06)'
+                              : 'rgba(34, 197, 94, 0.06)';
                           }
                         }}
                       >
@@ -1109,9 +1265,39 @@ const PuffpawTradeWars = () => {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
         }
+        @keyframes vsPulse {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.08); opacity: 0.9; }
+        }
+        @keyframes shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+        @keyframes barShimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(200%); }
+        }
+        @keyframes topGlow {
+          0%, 100% { box-shadow: 0 0 8px rgba(251, 191, 36, 0.15); }
+          50% { box-shadow: 0 0 16px rgba(251, 191, 36, 0.3); }
+        }
         button:hover, a:hover {
           opacity: 0.9;
           transform: translateY(-1px);
+        }
+        @media (max-width: 768px) {
+          .vs-screen-responsive {
+            grid-template-columns: 1fr !important;
+            gap: 16px !important;
+          }
+          .vs-divider-responsive {
+            padding: 12px 0 !important;
+          }
+          .vs-badge-responsive {
+            width: 48px !important;
+            height: 48px !important;
+            font-size: 1.1rem !important;
+          }
         }
         ::-webkit-scrollbar {
           height: 8px;
