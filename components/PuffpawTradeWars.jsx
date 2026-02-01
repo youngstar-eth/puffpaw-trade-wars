@@ -575,7 +575,7 @@ const PuffpawTradeWars = () => {
             </div>
             <div style={styles.statItem}>
               <div style={styles.statValue}>
-                {duneStats.totalHolders.toLocaleString()}
+                {polymarketStats.totalTraders.toLocaleString()}
               </div>
               <div style={styles.statLabel}>Current Holders</div>
             </div>
