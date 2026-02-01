@@ -67,13 +67,18 @@ const PuffpawTradeWars = () => {
 
   // Check if an address is a Claw (bot/agent)
   // A Claw is identified when signer === address (no proxy wallet = direct trading = bot)
+  // NOTE: Only works when signer data has DIFFERENT signer values (resolved via RPC)
   const isClaw = (address) => {
     if (!address) return false;
     const lowerAddress = address.toLowerCase();
-    const data = signerData[lowerAddress];
-    if (!data) return false;
-    // If signer equals address, it's a Claw (bot/agent)
-    return data.signer.toLowerCase() === lowerAddress;
+    const signerInfo = signerData[lowerAddress];
+    
+    // If no signer data, default to Paw
+    if (!signerInfo) return false;
+    
+    // Only mark as Claw if signerResolved flag is true
+    // This means we're confident the signer was actually resolved
+    return signerInfo.signerResolved === true;
   };
 
   // Get faction for a trader
@@ -581,24 +586,44 @@ const PuffpawTradeWars = () => {
       let signerMap = {};
       let newSignerData = {};
       let pawsCount = 0, clawsCount = 0, pawsVolume = 0, clawsVolume = 0;
+      let hasResolvedSigners = false;
       
       try {
         const signerRes = await fetch('/leaderboard_data.json');
         if (signerRes.ok) {
           const signerDataArray = await signerRes.json();
+          
+          // First pass: check if ANY signer is different from address
+          // This tells us if signer resolution is working
+          signerDataArray.forEach(item => {
+            if (item.address && item.signer) {
+              if (item.signer.toLowerCase() !== item.address.toLowerCase()) {
+                hasResolvedSigners = true;
+              }
+            }
+          });
+          
+          // Second pass: build signer map and calculate faction stats
           signerDataArray.forEach(item => {
             if (item.address && item.signer) {
               const lowerAddress = item.address.toLowerCase();
+              const lowerSigner = item.signer.toLowerCase();
               signerMap[lowerAddress] = item.signer;
+              
+              // Determine if this is a Claw:
+              // - signer === address AND we have evidence signer resolution is working
+              // If signer resolution isn't working (all signers === addresses), 
+              // we can't determine faction, so default everyone to Paw
+              const signerResolved = hasResolvedSigners && (lowerSigner === lowerAddress);
+              
               newSignerData[lowerAddress] = {
                 signer: item.signer,
                 volume: item.volume || 0,
+                signerResolved: signerResolved,
               };
               
               // Calculate faction stats
-              // If signer === address, it's a Claw (bot/agent)
-              const isClaw = item.signer.toLowerCase() === lowerAddress;
-              if (isClaw) {
+              if (signerResolved) {
                 clawsCount++;
                 clawsVolume += item.volume || 0;
               } else {
@@ -625,6 +650,8 @@ const PuffpawTradeWars = () => {
             pawsPercent,
             clawsPercent,
           });
+          
+          console.log('Faction detection: hasResolvedSigners=' + hasResolvedSigners + ', Paws=' + pawsCount + ', Claws=' + clawsCount);
         }
       } catch (e) {
         console.log('Signer data not available, using proxy addresses');
