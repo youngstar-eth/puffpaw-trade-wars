@@ -59,6 +59,24 @@ Paws (insan) vs Claws (bot/agent) faction sistemi ile trade savaşı liderlik ta
 2. **Vercel Cron** → Günlük gece yarısı `/api/cron/refresh` → Dune sorgusunu yeniler
 3. **Frontend** → `/api/dune` üzerinden canlı veri çeker, 10 dk'da bir auto-refresh
 
+## Skor Sistemi (UI Score)
+Leaderboard sıralaması Dune'dan gelen ham `score` yerine UI tarafında hesaplanan `ui_score` ile yapılır.
+
+**Formül:**
+```
+ui_score = Volume^0.7 × (1 + |PnL| / Volume)^2
+```
+
+**Mantık:**
+- `Volume^0.7` — Hacmi ödüllendirir ama azalan getiri ile (logaritmik etki). Çok yüksek hacim tek başına skoru domine edemez.
+- `(1 + |PnL| / Volume)^2` — PnL/Volume oranı (verimlilik) kare alınarak güçlü şekilde ödüllendirilir. Hem kâr hem zarar pozitif olarak sayılır (mutlak değer), çünkü amaç fiyat keşfi — doğru ya da yanlış, aktif pozisyon almak değerlidir.
+- Sıfır hacimli trader'lar otomatik 0 skor alır.
+
+**Hesaplama noktaları:**
+1. `fetch-dune-data.js` — CLI scripti, `ui_score` ve `ui_rank` alanlarını ekler
+2. `components/PuffpawTradeWars.jsx` — Frontend'de `enrichedRows` üzerinde hesaplanır, tablo bu skora göre sıralanır
+3. Faction ortalama skorları da bu formülle hesaplanır (`pawsAvgScore`, `clawsAvgScore`)
+
 ## Kodlama Kuralları
 - Türkçe yorum ve commit mesajları kullan
 - React functional component ve hooks kullan, class component kullanma

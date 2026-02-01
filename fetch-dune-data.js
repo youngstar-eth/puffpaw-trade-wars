@@ -115,10 +115,25 @@ async function main() {
     }
 
     const rows = jsonData.result.rows;
-    const columns = jsonData.result.metadata?.column_names || 
+    const columns = jsonData.result.metadata?.column_names ||
                     (rows.length > 0 ? Object.keys(rows[0]) : []);
 
-    console.log('✅ Veri başarıyla çekildi!\n');
+    // UI Skor hesaplama: Volume^0.7 × (1 + abs(PnL)/Volume)^2
+    rows.forEach(row => {
+      const volume = Math.abs(row.volume || 0);
+      const pnl = row.pnl || 0;
+      if (volume > 0) {
+        row.ui_score = Math.pow(volume, 0.7) * Math.pow(1 + Math.abs(pnl) / volume, 2);
+      } else {
+        row.ui_score = 0;
+      }
+    });
+
+    // Skora göre sırala (yüksekten düşüğe)
+    rows.sort((a, b) => (b.ui_score || 0) - (a.ui_score || 0));
+    rows.forEach((row, idx) => { row.ui_rank = idx + 1; });
+
+    console.log('✅ Veri başarıyla çekildi! (UI skorları hesaplandı)\n');
     console.log('📊 Veri Yapısı:');
     console.log(`   Toplam satır: ${rows.length}`);
     console.log(`   Kolonlar (${columns.length}):`);

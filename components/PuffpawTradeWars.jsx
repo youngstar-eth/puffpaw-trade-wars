@@ -602,8 +602,8 @@ const PuffpawTradeWars = () => {
       }
     }
     
-    // Final score formatting - 2 decimal places
-    if (lowerCol.includes('final_score') || lowerCol.includes('score')) {
+    // Final score / UI score formatting - 2 decimal places
+    if (lowerCol === 'ui_score' || lowerCol.includes('final_score') || lowerCol.includes('score')) {
       if (typeof value === 'number') {
         return new Intl.NumberFormat('en-US', {
           minimumFractionDigits: 2,
@@ -693,17 +693,24 @@ const PuffpawTradeWars = () => {
                 signerResolved: signerResolved,
               };
               
+              // UI Skor hesapla: Volume^0.7 × (1 + abs(PnL)/Volume)^2
+              const itemVolume = Math.abs(item.volume || 0);
+              const itemPnl = item.pnl || 0;
+              const itemUiScore = itemVolume > 0
+                ? Math.pow(itemVolume, 0.7) * Math.pow(1 + Math.abs(itemPnl) / itemVolume, 2)
+                : 0;
+
               // Calculate faction stats
               if (signerResolved) {
                 clawsCount++;
                 clawsVolume += item.volume || 0;
-                clawsPnl += item.pnl || 0;
-                clawsScoreSum += item.score || 0;
+                clawsPnl += itemPnl;
+                clawsScoreSum += itemUiScore;
               } else {
                 pawsCount++;
                 pawsVolume += item.volume || 0;
-                pawsPnl += item.pnl || 0;
-                pawsScoreSum += item.score || 0;
+                pawsPnl += itemPnl;
+                pawsScoreSum += itemUiScore;
               }
             }
           });
@@ -764,11 +771,24 @@ const PuffpawTradeWars = () => {
         return enrichedRow;
       });
 
-      // Add Faction column after rank_num
+      // UI Skor hesaplama: Volume^0.7 × (1 + abs(PnL)/Volume)^2
+      enrichedRows.forEach(row => {
+        const volume = Math.abs(row.volume || 0);
+        const pnl = row.pnl || 0;
+        row.ui_score = volume > 0
+          ? Math.pow(volume, 0.7) * Math.pow(1 + Math.abs(pnl) / volume, 2)
+          : 0;
+      });
+
+      // Skora göre sırala (yüksekten düşüğe) ve rank güncelle
+      enrichedRows.sort((a, b) => (b.ui_score || 0) - (a.ui_score || 0));
+      enrichedRows.forEach((row, idx) => { row.ui_rank = idx + 1; });
+
+      // Add ui_score and Faction columns after rank_num
       const rankIndex = cols.indexOf('rank_num');
       const newCols = [...cols];
       if (rankIndex !== -1) {
-        newCols.splice(rankIndex + 1, 0, 'faction');
+        newCols.splice(rankIndex + 1, 0, 'faction', 'ui_score');
       }
 
       // Add valuation columns after reward_amount
@@ -864,6 +884,7 @@ const PuffpawTradeWars = () => {
 
   const formatColumnName = (col) => {
     if (col === 'faction') return 'Faction';
+    if (col === 'ui_score') return 'UI Score';
     return col
       .replace(/_/g, ' ')
       .replace(/\b\w/g, l => l.toUpperCase());
