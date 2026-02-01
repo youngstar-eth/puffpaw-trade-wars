@@ -18,8 +18,8 @@ const PuffpawTradeWars = () => {
     totalTraders: 0,
   });
   
-  // Auto-refresh interval: 1 hour (3600000 ms)
-  const REFRESH_INTERVAL = 3600000;
+  // Auto-refresh interval: 10 minutes (600000 ms)
+  const REFRESH_INTERVAL = 600000;
 
   // Puffpaw brand colors
   const colors = {
@@ -602,7 +602,7 @@ const PuffpawTradeWars = () => {
                 </div>
                 {lastUpdated && (
                   <div style={{fontSize: '0.8rem', color: colors.textMuted}}>
-                    Last updated: {lastUpdated.toLocaleTimeString()} • Auto-refresh in {nextUpdate ? Math.max(0, Math.ceil((nextUpdate - new Date()) / 60000)) : 60} min
+                    Last updated: {lastUpdated.toLocaleTimeString()} • Auto-refresh in {nextUpdate ? Math.max(0, Math.ceil((nextUpdate - new Date()) / 60000)) : 10} min
                   </div>
                 )}
               </div>
