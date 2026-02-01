@@ -3,6 +3,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import PolymarketWidget from './PolymarketWidget';
 
+// Known bot/agent wallet addresses (add addresses here as they are identified)
+const KNOWN_BOTS = [
+  // Example: '0x1234...abcd'
+  // Add verified bot addresses here
+];
+
 const PuffpawTradeWars = () => {
   const [data, setData] = useState([]);
   const [columns, setColumns] = useState([]);
@@ -23,11 +29,21 @@ const PuffpawTradeWars = () => {
     totalTraders: 0,
     totalHolders: 0,
   });
+
+  // Faction stats (mock data for now)
+  const [factionStats] = useState({
+    pawsCount: 1250,
+    clawsCount: 81,
+    pawsVolume: 607000,
+    clawsVolume: 328000,
+    pawsPercent: 65,
+    clawsPercent: 35,
+  });
   
   // Auto-refresh interval: 10 minutes (600000 ms)
   const REFRESH_INTERVAL = 600000;
 
-  // Puffpaw brand colors
+  // Puffpaw brand colors + Faction colors
   const colors = {
     primary: '#E84142',      // Puffpaw red
     primaryDark: '#c73536',
@@ -42,6 +58,22 @@ const PuffpawTradeWars = () => {
     bronze: '#d97706',
     success: '#22c55e',
     error: '#ef4444',
+    // Faction colors
+    pawGreen: '#22c55e',
+    pawAmber: '#f59e0b',
+    clawPurple: '#a855f7',
+    clawCyan: '#06b6d4',
+  };
+
+  // Check if an address is a known bot
+  const isBot = (address) => {
+    if (!address) return false;
+    return KNOWN_BOTS.some(bot => bot.toLowerCase() === address.toLowerCase());
+  };
+
+  // Get faction for a trader
+  const getFaction = (address) => {
+    return isBot(address) ? 'claw' : 'paw';
   };
 
   const styles = {
@@ -69,23 +101,6 @@ const PuffpawTradeWars = () => {
       alignItems: 'center',
       gap: '12px',
     },
-    logoIcon: {
-      width: '40px',
-      height: '40px',
-      borderRadius: '10px',
-      overflow: 'hidden',
-    },
-    logoImage: {
-      width: '100%',
-      height: '100%',
-      objectFit: 'cover',
-    },
-    logoText: {
-      fontSize: '1.25rem',
-      fontWeight: 700,
-      color: colors.text,
-      letterSpacing: '-0.5px',
-    },
     content: {
       maxWidth: '1600px',
       margin: '0 auto',
@@ -93,7 +108,7 @@ const PuffpawTradeWars = () => {
     },
     heroSection: {
       textAlign: 'center',
-      marginBottom: '48px',
+      marginBottom: '32px',
       padding: '40px 20px',
       background: `linear-gradient(135deg, ${colors.surface} 0%, ${colors.backgroundDark} 100%)`,
       borderRadius: '16px',
@@ -113,19 +128,20 @@ const PuffpawTradeWars = () => {
       fontSize: '1.1rem',
       color: colors.textMuted,
       fontWeight: 400,
-      maxWidth: '600px',
+      maxWidth: '700px',
       margin: '0 auto',
       lineHeight: 1.6,
     },
     statsBar: {
       display: 'flex',
       justifyContent: 'center',
-      gap: '32px',
+      gap: '24px',
       marginTop: '32px',
       flexWrap: 'wrap',
     },
     statItem: {
       textAlign: 'center',
+      minWidth: '80px',
     },
     statValue: {
       fontSize: '1.5rem',
@@ -136,6 +152,98 @@ const PuffpawTradeWars = () => {
       fontSize: '0.85rem',
       color: colors.textMuted,
       marginTop: '4px',
+    },
+    // Faction Battle Bar styles
+    battleBarContainer: {
+      marginBottom: '32px',
+      padding: '24px',
+      background: colors.surface,
+      borderRadius: '16px',
+      border: `1px solid ${colors.surfaceLight}`,
+    },
+    battleBarHeader: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: '20px',
+    },
+    factionSide: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '4px',
+    },
+    factionName: {
+      fontSize: '1.25rem',
+      fontWeight: 700,
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+    },
+    factionStats: {
+      fontSize: '0.85rem',
+      color: colors.textMuted,
+    },
+    vsText: {
+      fontSize: '1.5rem',
+      fontWeight: 900,
+      color: colors.primary,
+      textShadow: `0 0 20px rgba(232, 65, 66, 0.5)`,
+    },
+    battleBarTrack: {
+      height: '12px',
+      background: colors.backgroundDark,
+      borderRadius: '6px',
+      overflow: 'hidden',
+      display: 'flex',
+    },
+    pawsBar: {
+      height: '100%',
+      background: `linear-gradient(90deg, ${colors.pawGreen}, ${colors.pawAmber})`,
+      transition: 'width 0.5s ease',
+    },
+    clawsBar: {
+      height: '100%',
+      background: `linear-gradient(90deg, ${colors.clawPurple}, ${colors.clawCyan})`,
+      transition: 'width 0.5s ease',
+    },
+    // Prize Categories styles
+    prizeContainer: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+      gap: '20px',
+      marginBottom: '32px',
+    },
+    prizeCard: {
+      padding: '24px',
+      borderRadius: '12px',
+      background: colors.surface,
+      textAlign: 'center',
+    },
+    prizeCardGrand: {
+      border: `2px solid ${colors.gold}`,
+      boxShadow: `0 0 20px rgba(251, 191, 36, 0.2)`,
+    },
+    prizeCardPaw: {
+      border: `2px solid ${colors.pawGreen}`,
+      boxShadow: `0 0 20px rgba(34, 197, 94, 0.15)`,
+    },
+    prizeCardClaw: {
+      border: `2px solid ${colors.clawPurple}`,
+      boxShadow: `0 0 20px rgba(168, 85, 247, 0.15)`,
+    },
+    prizeIcon: {
+      fontSize: '2.5rem',
+      marginBottom: '12px',
+    },
+    prizeTitle: {
+      fontSize: '1.1rem',
+      fontWeight: 700,
+      marginBottom: '8px',
+    },
+    prizeDesc: {
+      fontSize: '0.85rem',
+      color: colors.textMuted,
+      lineHeight: 1.5,
     },
     toolbar: {
       display: 'flex',
@@ -168,6 +276,7 @@ const PuffpawTradeWars = () => {
       display: 'flex',
       alignItems: 'center',
       gap: '8px',
+      textDecoration: 'none',
     },
     tableContainer: {
       background: colors.surface,
@@ -178,7 +287,7 @@ const PuffpawTradeWars = () => {
     table: {
       width: '100%',
       borderCollapse: 'collapse',
-      minWidth: '1200px',
+      minWidth: '1300px',
     },
     th: {
       padding: '14px 12px',
@@ -215,6 +324,12 @@ const PuffpawTradeWars = () => {
     rank3: {
       background: 'rgba(217, 119, 6, 0.1)',
       borderLeft: `3px solid ${colors.bronze}`,
+    },
+    pawRow: {
+      background: 'rgba(34, 197, 94, 0.03)',
+    },
+    clawRow: {
+      background: 'rgba(168, 85, 247, 0.03)',
     },
     loading: {
       textAlign: 'center',
@@ -268,6 +383,23 @@ const PuffpawTradeWars = () => {
       background: 'rgba(217, 119, 6, 0.2)',
       color: colors.bronze,
     },
+    factionBadge: {
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '4px',
+      padding: '4px 8px',
+      borderRadius: '4px',
+      fontSize: '0.75rem',
+      fontWeight: 600,
+    },
+    pawBadge: {
+      background: 'rgba(34, 197, 94, 0.15)',
+      color: colors.pawGreen,
+    },
+    clawBadge: {
+      background: 'rgba(168, 85, 247, 0.15)',
+      color: colors.clawPurple,
+    },
     positiveValue: {
       color: colors.success,
     },
@@ -275,10 +407,60 @@ const PuffpawTradeWars = () => {
       color: colors.error,
     },
     footer: {
-      textAlign: 'center',
-      padding: '32px 24px',
       borderTop: `1px solid ${colors.surface}`,
       marginTop: '48px',
+      padding: '48px 24px 32px',
+    },
+    footerJoinSection: {
+      textAlign: 'center',
+      marginBottom: '32px',
+    },
+    footerJoinTitle: {
+      fontSize: '1.5rem',
+      fontWeight: 700,
+      marginBottom: '16px',
+    },
+    footerButtons: {
+      display: 'flex',
+      justifyContent: 'center',
+      gap: '16px',
+      flexWrap: 'wrap',
+      marginBottom: '16px',
+    },
+    pawButton: {
+      padding: '12px 24px',
+      background: `linear-gradient(135deg, ${colors.pawGreen}, ${colors.pawAmber})`,
+      border: 'none',
+      borderRadius: '8px',
+      color: colors.text,
+      fontSize: '0.95rem',
+      fontWeight: 600,
+      cursor: 'pointer',
+      textDecoration: 'none',
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '8px',
+    },
+    clawButton: {
+      padding: '12px 24px',
+      background: `linear-gradient(135deg, ${colors.clawPurple}, ${colors.clawCyan})`,
+      border: 'none',
+      borderRadius: '8px',
+      color: colors.text,
+      fontSize: '0.95rem',
+      fontWeight: 600,
+      cursor: 'pointer',
+      textDecoration: 'none',
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '8px',
+    },
+    footerDiscord: {
+      fontSize: '0.9rem',
+      color: colors.textMuted,
+    },
+    footerCredits: {
+      textAlign: 'center',
       color: colors.textMuted,
       fontSize: '0.85rem',
     },
@@ -431,9 +613,15 @@ const PuffpawTradeWars = () => {
         return enrichedRow;
       });
 
-      // Add columns after reward_amount
-      const rewardIndex = cols.indexOf('reward_amount');
+      // Add Faction column after rank_num
+      const rankIndex = cols.indexOf('rank_num');
       const newCols = [...cols];
+      if (rankIndex !== -1) {
+        newCols.splice(rankIndex + 1, 0, 'faction');
+      }
+
+      // Add valuation columns after reward_amount
+      const rewardIndex = newCols.indexOf('reward_amount');
       if (rewardIndex !== -1) {
         const valuationNames = valuationColumns.map(({ name }) => name);
         newCols.splice(rewardIndex + 1, 0, ...valuationNames);
@@ -500,12 +688,20 @@ const PuffpawTradeWars = () => {
     return () => clearInterval(intervalId);
   }, [fetchData, fetchPolymarketStats]);
 
-  const getRowStyle = (index) => {
+  const getRowStyle = (index, traderAddress) => {
     const baseStyle = { ...styles.tr };
+    const faction = getFaction(traderAddress);
+    
+    // Top 3 ranks have priority styling
     if (index === 0) return { ...baseStyle, ...styles.rank1 };
     if (index === 1) return { ...baseStyle, ...styles.rank2 };
     if (index === 2) return { ...baseStyle, ...styles.rank3 };
-    return baseStyle;
+    
+    // Apply subtle faction tint for other rows
+    if (faction === 'claw') {
+      return { ...baseStyle, ...styles.clawRow };
+    }
+    return { ...baseStyle, ...styles.pawRow };
   };
 
   const getRankBadge = (index) => {
@@ -516,12 +712,34 @@ const PuffpawTradeWars = () => {
   };
 
   const formatColumnName = (col) => {
+    if (col === 'faction') return 'Faction';
     return col
       .replace(/_/g, ' ')
       .replace(/\b\w/g, l => l.toUpperCase());
   };
 
+  const renderFactionBadge = (address) => {
+    const faction = getFaction(address);
+    if (faction === 'claw') {
+      return (
+        <span style={{...styles.factionBadge, ...styles.clawBadge}}>
+          ⚙️ Claw
+        </span>
+      );
+    }
+    return (
+      <span style={{...styles.factionBadge, ...styles.pawBadge}}>
+        🐾 Paw
+      </span>
+    );
+  };
+
   const renderCellValue = (row, col) => {
+    // Handle faction column specially
+    if (col === 'faction') {
+      return renderFactionBadge(row.trader);
+    }
+
     const formatted = formatValue(row[col], col);
     
     // Handle PNL with color
@@ -536,15 +754,75 @@ const PuffpawTradeWars = () => {
     return formatted;
   };
 
+  // Faction Battle Bar Component
+  const FactionBattleBar = () => (
+    <div style={styles.battleBarContainer}>
+      <div style={styles.battleBarHeader}>
+        <div style={{...styles.factionSide, alignItems: 'flex-start'}}>
+          <div style={{...styles.factionName, color: colors.pawGreen}}>
+            🐾 Paws
+          </div>
+          <div style={styles.factionStats}>
+            {factionStats.pawsCount.toLocaleString()} traders • ${(factionStats.pawsVolume / 1000).toFixed(0)}K volume
+          </div>
+        </div>
+        <div style={styles.vsText}>VS</div>
+        <div style={{...styles.factionSide, alignItems: 'flex-end'}}>
+          <div style={{...styles.factionName, color: colors.clawPurple}}>
+            Claws ⚙️
+          </div>
+          <div style={styles.factionStats}>
+            {factionStats.clawsCount.toLocaleString()} agents • ${(factionStats.clawsVolume / 1000).toFixed(0)}K volume
+          </div>
+        </div>
+      </div>
+      <div style={styles.battleBarTrack}>
+        <div style={{...styles.pawsBar, width: `${factionStats.pawsPercent}%`}} />
+        <div style={{...styles.clawsBar, width: `${factionStats.clawsPercent}%`}} />
+      </div>
+      <div style={{display: 'flex', justifyContent: 'space-between', marginTop: '8px', fontSize: '0.85rem', fontWeight: 600}}>
+        <span style={{color: colors.pawGreen}}>{factionStats.pawsPercent}%</span>
+        <span style={{color: colors.clawPurple}}>{factionStats.clawsPercent}%</span>
+      </div>
+    </div>
+  );
+
+  // Prize Categories Component
+  const PrizeCategories = () => (
+    <div style={styles.prizeContainer}>
+      <div style={{...styles.prizeCard, ...styles.prizeCardGrand}}>
+        <div style={styles.prizeIcon}>🏆</div>
+        <div style={{...styles.prizeTitle, color: colors.gold}}>The Grand Prize</div>
+        <div style={styles.prizeDesc}>
+          Highest Efficiency Score<br/>
+          <span style={{color: colors.textMuted, fontSize: '0.8rem'}}>(PnL² / Volume)</span>
+        </div>
+      </div>
+      <div style={{...styles.prizeCard, ...styles.prizeCardPaw}}>
+        <div style={styles.prizeIcon}>🐾</div>
+        <div style={{...styles.prizeTitle, color: colors.pawGreen}}>The Golden Paw</div>
+        <div style={styles.prizeDesc}>
+          Best Human Trader<br/>
+          <span style={{color: colors.textMuted, fontSize: '0.8rem'}}>Proving intuition beats algorithms</span>
+        </div>
+      </div>
+      <div style={{...styles.prizeCard, ...styles.prizeCardClaw}}>
+        <div style={styles.prizeIcon}>⚙️</div>
+        <div style={{...styles.prizeTitle, color: colors.clawPurple}}>The Apex Claw</div>
+        <div style={styles.prizeDesc}>
+          Most Efficient Agent<br/>
+          <span style={{color: colors.textMuted, fontSize: '0.8rem'}}>The machine that outperformed all</span>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div style={styles.container}>
       {/* Header */}
       <header style={styles.header}>
         <div style={styles.logo}>
-          <div style={styles.logoIcon}>
-            <img src="/puffpaw-logo.png" alt="Puffpaw" style={styles.logoImage} />
-          </div>
-          <span style={styles.logoText}>Puffpaw</span>
+          <img src="/paws-vs-claws-logo.png" alt="Paws vs Claws" style={{height: '50px', width: 'auto'}} />
         </div>
         <a 
           href="https://whitepaper.puffpaw.xyz/" 
@@ -563,7 +841,7 @@ const PuffpawTradeWars = () => {
             <span style={styles.titleAccent}>Paws vs Claws</span> Leaderboard
           </h1>
           <p style={styles.subtitle}>
-            Who will discover the true price first? Human intuition or Machine precision?
+            The Arena is Open. 0.4% of $VAPE supply awaits the warriors who discover the true price. Are you a Paw or a Claw?
           </p>
           
           <div style={styles.statsBar}>
@@ -588,10 +866,28 @@ const PuffpawTradeWars = () => {
               </div>
               <div style={styles.statLabel}>Total Volume</div>
             </div>
+            <div style={styles.statItem}>
+              <div style={{...styles.statValue, color: colors.pawGreen}}>
+                {factionStats.pawsCount.toLocaleString()}
+              </div>
+              <div style={styles.statLabel}>🐾 Paws</div>
+            </div>
+            <div style={styles.statItem}>
+              <div style={{...styles.statValue, color: colors.clawPurple}}>
+                {factionStats.clawsCount.toLocaleString()}
+              </div>
+              <div style={styles.statLabel}>⚙️ Claws</div>
+            </div>
           </div>
         </div>
 
-        {/* Polymarket Widget - At the top */}
+        {/* Faction Battle Bar */}
+        <FactionBattleBar />
+
+        {/* Prize Categories */}
+        <PrizeCategories />
+
+        {/* Polymarket Widget */}
         <PolymarketWidget />
 
         {/* Error State */}
@@ -648,7 +944,7 @@ const PuffpawTradeWars = () => {
                   {data.map((row, rowIdx) => (
                     <tr 
                       key={rowIdx} 
-                      style={getRowStyle(rowIdx)}
+                      style={getRowStyle(rowIdx, row.trader)}
                       onMouseEnter={(e) => {
                         if (rowIdx > 2) {
                           e.currentTarget.style.background = colors.surfaceLight;
@@ -656,13 +952,16 @@ const PuffpawTradeWars = () => {
                       }}
                       onMouseLeave={(e) => {
                         if (rowIdx > 2) {
-                          e.currentTarget.style.background = 'transparent';
+                          const faction = getFaction(row.trader);
+                          e.currentTarget.style.background = faction === 'claw' 
+                            ? 'rgba(168, 85, 247, 0.03)' 
+                            : 'rgba(34, 197, 94, 0.03)';
                         }
                       }}
                     >
                       {columns.map((col, colIdx) => (
                         <td key={colIdx} style={styles.td}>
-                          {colIdx === 0 && getRankBadge(rowIdx)}
+                          {col === 'rank_num' && getRankBadge(rowIdx)}
                           {renderCellValue(row, col)}
                         </td>
                       ))}
@@ -689,7 +988,32 @@ const PuffpawTradeWars = () => {
 
       {/* Footer */}
       <footer style={styles.footer}>
-        <p>
+        <div style={styles.footerJoinSection}>
+          <div style={styles.footerJoinTitle}>Join the Battle</div>
+          <div style={styles.footerButtons}>
+            <a 
+              href="https://form.typeform.com/to/XzkXSGYq" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              style={styles.pawButton}
+            >
+              🐾 Join the Paws
+            </a>
+            <a 
+              href="https://form.typeform.com/to/cr5HbKt8" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              style={styles.clawButton}
+            >
+              ⚙️ Deploy Your Claws
+            </a>
+          </div>
+          <div style={styles.footerDiscord}>
+            Questions? Join <a href="https://discord.gg/puffpaw" target="_blank" rel="noopener noreferrer" style={styles.footerLink}>#waitingroom on Discord</a>
+          </div>
+        </div>
+        
+        <div style={styles.footerCredits}>
           Powered by{' '}
           <a href="https://puffpaw.xyz" target="_blank" rel="noopener noreferrer" style={styles.footerLink}>
             Puffpaw
@@ -702,7 +1026,7 @@ const PuffpawTradeWars = () => {
           <a href="https://polymarket.com" target="_blank" rel="noopener noreferrer" style={styles.footerLink}>
             Polymarket
           </a>
-        </p>
+        </div>
       </footer>
 
       <style jsx>{`
@@ -710,12 +1034,9 @@ const PuffpawTradeWars = () => {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
         }
-        button:hover {
+        button:hover, a:hover {
           opacity: 0.9;
           transform: translateY(-1px);
-        }
-        a:hover {
-          opacity: 0.8;
         }
         ::-webkit-scrollbar {
           height: 8px;
