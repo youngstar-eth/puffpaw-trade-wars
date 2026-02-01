@@ -73,9 +73,12 @@ ui_score = Volume^0.7 × (1 + |PnL| / Volume)^2
 - Sıfır hacimli trader'lar otomatik 0 skor alır.
 
 **Hesaplama noktaları:**
-1. `fetch-dune-data.js` — CLI scripti, `ui_score` ve `ui_rank` alanlarını ekler
-2. `components/PuffpawTradeWars.jsx` — Frontend'de `enrichedRows` üzerinde hesaplanır, tablo bu skora göre sıralanır
-3. Faction ortalama skorları da bu formülle hesaplanır (`pawsAvgScore`, `clawsAvgScore`)
+1. **Dune Query #6622482** — `scores` CTE'sinde `final_score` olarak hesaplanır (SQL: `POWER(total_volume, 0.7) * POWER(1.0 + ABS(total_pnl_usd) / NULLIF(total_volume, 0), 2)`)
+2. `fetch-dune-data.js` — CLI scripti, `ui_score` ve `ui_rank` alanlarını ekler
+3. `components/PuffpawTradeWars.jsx` — Frontend'de `enrichedRows` üzerinde hesaplanır, tablo bu skora göre sıralanır
+4. Faction ortalama skorları da bu formülle hesaplanır (`pawsAvgScore`, `clawsAvgScore`)
+
+**Not:** Dune SQL, fetch-dune-data.js ve frontend üçü de aynı formülü kullanır. Tutarlılık kritiktir.
 
 ## Kodlama Kuralları
 - Türkçe yorum ve commit mesajları kullan
